@@ -1,0 +1,9 @@
+﻿@model FileUploadModel
+
+<form method="post" asp-action="Index" asp-controller="FileUpload" enctype="multipart/form-data">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <input asp-for="UploadFile" />
+    <span asp-validation-for="UploadFile" class="text-danger"></span>
+    <input type="submit" value="Upload"/>
+</form>
