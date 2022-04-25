@@ -15,6 +15,7 @@ namespace Domain.Processors
             _transactionRepository = transactionRepository;
             ErrorMessages = new List<string>();
             Transactions = new List<Transaction>();
+            InvalidTransactions = new List<Transaction>();
         }
 
         public void ReadAndValidateFile()
@@ -34,10 +35,11 @@ namespace Domain.Processors
                                 if (AddErrorMessageIfNull(transactionId))
                                 {
                                     transaction = new();
+                                    InvalidRecord = false;
                                     transaction.Id = transactionId;
                                     if (transaction.Id.Length > 50)
                                     {
-                                        ErrorMessages.Add($"Transaction id more than max length {transactionId}");
+                                        AddErrorMessage($"Transaction id more than max length {transactionId}");
                                     }
                                 }
                                 break;
@@ -53,7 +55,7 @@ namespace Domain.Processors
                                     }
                                     else
                                     {
-                                        ErrorMessages.Add($"Transaction Date is not in yyyy-MM-ddThh:mm:ss format {transactionDate}");
+                                        AddErrorMessage($"Transaction Date is not in yyyy-MM-ddThh:mm:ss format {transactionDate}");
                                     };
                                 }
                                 break;
@@ -78,7 +80,7 @@ namespace Domain.Processors
                                                         }
                                                         else
                                                         {
-                                                            ErrorMessages.Add($"Amount not decimal {amount}");
+                                                            AddErrorMessage($"Amount not decimal {amount}");
                                                         }
                                                     }
                                                     break;
@@ -91,7 +93,7 @@ namespace Domain.Processors
                                                         transaction.CurrencyCode = currenyCode;
                                                         if (!IsValidCurrencyCode(transaction.CurrencyCode))
                                                         {
-                                                            ErrorMessages.Add($"Is not valid Currency Symbol {transaction.CurrencyCode}");
+                                                            AddErrorMessage($"Is not valid Currency Symbol {transaction.CurrencyCode}");
                                                         };
                                                     }
                                                     break;
@@ -110,9 +112,10 @@ namespace Domain.Processors
                                     transaction.Status = status;
                                     if (!_status.Any(x => x == transaction.Status))
                                     {
-                                        ErrorMessages.Add($"Status is not available {transaction.Status}");
+                                        AddErrorMessage($"Status is not available {transaction.Status}");
                                     }
                                     Transactions.Add(transaction);
+                                    if (InvalidRecord) InvalidTransactions.Add(transaction);
                                 }
                                 break;
                             }

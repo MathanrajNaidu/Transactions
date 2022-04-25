@@ -13,6 +13,9 @@ namespace Domain.Processors
         public List<string> ErrorMessages { get; protected set; }
 
         protected List<Transaction> Transactions { get; set; }
+        public List<Transaction> InvalidTransactions { get; protected set; }
+
+        protected bool InvalidRecord = false;
 
         protected static bool IsValidCurrencyCode(string currencyCode)
         {
@@ -25,6 +28,7 @@ namespace Domain.Processors
         {
             if (col == null)
             {
+                InvalidRecord = true;
                 ErrorMessages.Add($"{col} is null");
                 return false;
             }
@@ -46,6 +50,12 @@ namespace Domain.Processors
             {
                 ErrorMessages.Add(ex.InnerException.Message);
             }
+        }
+
+        protected void AddErrorMessage(string message)
+        {
+            InvalidRecord = true;
+            ErrorMessages.Add(message);
         }
     }
 }

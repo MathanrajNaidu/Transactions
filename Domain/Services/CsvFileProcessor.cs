@@ -12,6 +12,7 @@ namespace Domain.Processors
             _transactionRepository = transactionRepository;
             ErrorMessages = new List<string>();
             Transactions = new List<Transaction>();
+            InvalidTransactions = new List<Transaction>();
         }
 
         public void ReadAndValidateFile()
@@ -23,12 +24,13 @@ namespace Domain.Processors
                 if (cols?.Length >= 0)
                 {
                     Transaction transaction = new();
+                    InvalidRecord = false;
                     if (AddErrorMessageIfNull(cols[0]))
                     {
                         transaction.Id = cols[0].ToString();
                         if(transaction.Id.Length > 50)
                         {
-                            ErrorMessages.Add($"Transaction id more than max length {cols[1]}");
+                            AddErrorMessage($"Transaction id more than max length {cols[1]}");
                         }
                     }
                     if (AddErrorMessageIfNull(cols[1]))
@@ -39,7 +41,7 @@ namespace Domain.Processors
                         }
                         else
                         {
-                            ErrorMessages.Add($"Amount not decimal {cols[1]}");
+                            AddErrorMessage($"Amount not decimal {cols[1]}");
                         }
                     }
                     if (AddErrorMessageIfNull(cols[2]))
@@ -47,7 +49,7 @@ namespace Domain.Processors
                         transaction.CurrencyCode = cols[2].ToString();
                         if (!IsValidCurrencyCode(transaction.CurrencyCode))
                         {
-                            ErrorMessages.Add($"Is not valid Currency Symbol {transaction.CurrencyCode}");
+                            AddErrorMessage($"Is not valid Currency Symbol {transaction.CurrencyCode}");
                         };
                     }
                     if (AddErrorMessageIfNull(cols[3]))
@@ -58,7 +60,7 @@ namespace Domain.Processors
                         }
                         else
                         {
-                            ErrorMessages.Add($"Transaction Date is not in dd/MM/yyyy hh:mm:ss format {cols[3]}");
+                            AddErrorMessage($"Transaction Date is not in dd/MM/yyyy hh:mm:ss format {cols[3]}");
                         };
                     }
                     if (AddErrorMessageIfNull(cols[4]))
@@ -66,11 +68,12 @@ namespace Domain.Processors
                         transaction.Status = cols[4].ToString();
                         if (!_status.Any(x => x == transaction.Status))
                         {
-                            ErrorMessages.Add($"Status is not available {transaction.Status}");
+                            AddErrorMessage($"Status is not available {transaction.Status}");
                         }
                     }
 
                     Transactions.Add(transaction);
+                    if(InvalidRecord) InvalidTransactions.Add(transaction);
                 }
             }
         }

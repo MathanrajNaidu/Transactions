@@ -1,5 +1,6 @@
 ﻿using Domain.Interfaces;
 using Domain.Processors;
+using Domain.Services;
 
 namespace Domain
 {
@@ -27,6 +28,11 @@ namespace Domain
             if(fileProcessor.ErrorMessages.Count == 0)
             {
                 fileProcessor.StoreTransactions();
+            } 
+            else
+            {
+                Logger logger = Logger.Instance;
+                logger.LogInvalidRecords(fileProcessor.InvalidTransactions, fileProcessor.ErrorMessages);
             }
 
             return fileProcessor.ErrorMessages;
