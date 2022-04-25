@@ -1,20 +1,21 @@
-﻿using Domain.Transactions;
+﻿using Domain.Interfaces;
+using Domain.Processors;
 
 namespace Domain
 {
     public class FileUploadService
     {
-        public static List<string> ProcessFile(StreamReader streamReader, string fileFormat) 
+        public static List<string> ProcessFile(StreamReader streamReader, string fileFormat, ITransactionRepository transactionRepository) 
         { 
             IFileProcessor fileProcessor;
 
-            if(fileFormat.ToLower() == "csv")
+            if(fileFormat.ToLower() == ".csv")
             {
-                fileProcessor = CsvFileProcessor.Create(streamReader);
+                fileProcessor = new CsvFileProcessor(streamReader, transactionRepository);
             }
-            else if (fileFormat.ToLower() == "xml")
+            else if (fileFormat.ToLower() == ".xml")
             {
-                fileProcessor = XmlFileProcessor.Create(streamReader);
+                fileProcessor = new XmlFileProcessor(streamReader, transactionRepository);
             }
             else
             {
@@ -30,7 +31,5 @@ namespace Domain
 
             return fileProcessor.ErrorMessages;
         }
-
-
     }
 }

@@ -1,34 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Globalization;
+using Domain.Interfaces;
+using Domain.Transactions;
 
-namespace Domain.Transactions
+namespace Domain.Processors
 {
-    public class CsvFileProcessor : IFileProcessor
+    public class CsvFileProcessor : FileProcessorBase, IFileProcessor
     {
-        private StreamReader _reader;
-
-        public List<string> ErrorMessages { get; private set; }
-
-        public List<Transaction> Transactions { get; private set; }
-
-
-        private CsvFileProcessor(StreamReader reader)
+        public CsvFileProcessor(StreamReader reader, ITransactionRepository transactionRepository)
         {
             _reader = reader;
+            _transactionRepository = transactionRepository;
             ErrorMessages = new List<string>();
             Transactions = new List<Transaction>();
-        }
-
-        public static CsvFileProcessor Create(StreamReader reader)
-        {
-
-            CsvFileProcessor csvFileProcessor = new(reader);
-            csvFileProcessor._reader = reader;
-            return csvFileProcessor;
         }
 
         public void ReadAndValidateFile()
@@ -39,14 +22,18 @@ namespace Domain.Transactions
                 var cols = line?.Split(',');
                 if (cols?.Length >= 0)
                 {
-                    Transaction transaction = new Transaction();
+                    Transaction transaction = new();
                     if (AddErrorMessageIfNull(cols[0]))
                     {
                         transaction.Id = cols[0].ToString();
+                        if(transaction.Id.Length > 50)
+                        {
+                            ErrorMessages.Add($"Transaction id more than max length {cols[1]}");
+                        }
                     }
                     if (AddErrorMessageIfNull(cols[1]))
                     {
-                        if (Decimal.TryParse(cols[1].ToString(), out decimal amount))
+                        if (decimal.TryParse(cols[1].ToString(), out decimal amount))
                         {
                             transaction.Amount = amount;
                         }
@@ -65,13 +52,13 @@ namespace Domain.Transactions
                     }
                     if (AddErrorMessageIfNull(cols[3]))
                     {
-                        if (DateTime.TryParseExact(cols[3].ToString(), "dd/MM/yyyy hh:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedDate))
+                        if (DateTime.TryParseExact(cols[3].ToString(), "dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedDate))
                         {
                             transaction.TransactionDate = parsedDate;
                         }
                         else
                         {
-                            ErrorMessages.Add($"Transaction Date not able to parse {cols[3]}");
+                            ErrorMessages.Add($"Transaction Date is not in dd/MM/yyyy hh:mm:ss format {cols[3]}");
                         };
                     }
                     if (AddErrorMessageIfNull(cols[4]))
@@ -82,6 +69,8 @@ namespace Domain.Transactions
                             ErrorMessages.Add($"Status is not available {transaction.Status}");
                         }
                     }
+
+                    Transactions.Add(transaction);
                 }
             }
         }
@@ -93,34 +82,6 @@ namespace Domain.Transactions
             "Finished"
         };
 
-        public void StoreTransactions()
-        {
-            if (ErrorMessages.Count == 0)
-            {
-
-            }
-            else
-            {
-
-            }
-        }
-
-        private bool AddErrorMessageIfNull(string col)
-        {
-            if (col == null)
-            {
-                ErrorMessages.Add($"{col} is null");
-                return false;
-            }
-
-            return true;
-        }
-
-        private static bool IsValidCurrencyCode(string currencyCode)
-        {
-            var regions = CultureInfo.GetCultures(CultureTypes.SpecificCultures)
-                          .Select(x => new RegionInfo(x.LCID));
-            return regions.Any(x => x.ISOCurrencySymbol == currencyCode);
-        }
+       
     }
 }
